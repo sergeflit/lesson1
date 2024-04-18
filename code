@@ -1,1 +1,104 @@
+import os
+import json
+from datetime import datetime
+
+class Note:
+    def __init__(self, id, title, body, created_at=None, updated_at=None):
+        self.id = id
+        self.title = title
+        self.body = body
+        self.created_at = created_at if created_at else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.updated_at = updated_at if updated_at else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "body": self.body,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+
+class NotesManager:
+    def __init__(self):
+        self.notes_file = "notes.json"
+        self.notes = []
+
+        if os.path.exists(self.notes_file):
+            with open(self.notes_file, "r") as f:
+                data = json.load(f)
+                self.notes = [Note(**note) for note in data]
+
+    def _save_notes(self):
+        with open(self.notes_file, "w") as f:
+            json.dump([note.to_dict() for note in self.notes], f)
+
+    def list_notes(self):
+        if not self.notes:
+            print("Список заметок пуст")
+        else:
+            for note in self.notes:
+                print(f"ID: {note.id}, Заголовок: {note.title}, Создано: {note.created_at}, Обновлено: {note.updated_at}")
+
+    def add_note(self, title, body):
+        note_id = len(self.notes) + 1
+        new_note = Note(note_id, title, body)
+        self.notes.append(new_note)
+        self._save_notes()
+        print("Заметка успешно добавлена")
+
+    def edit_note(self, note_id, new_title, new_body):
+        for note in self.notes:
+            if note.id == note_id:
+                note.title = new_title
+                note.body = new_body
+                note.updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self._save_notes()
+                print("Заметка успешно отредактирована")
+                return
+        print("Заметка с указанным ID не найдена")
+
+    def delete_note(self, note_id):
+        for note in self.notes:
+            if note.id == note_id:
+                self.notes.remove(note)
+                self._save_notes()
+                print("Заметка успешно удалена")
+                return
+        print("Заметка с указанным ID не найдена")
+
+def main():
+    notes_manager = NotesManager()
+
+    while True:
+        print("\nВыберите действие:")
+        print("1. Просмотреть список заметок")
+        print("2. Добавить заметку")
+        print("3. Редактировать заметку")
+        print("4. Удалить заметку")
+        print("5. Выйти")
+
+        choice = input("Введите номер действия: ")
+
+        if choice == "1":
+            notes_manager.list_notes()
+        elif choice == "2":
+            title = input("Введите заголовок заметки: ")
+            body = input("Введите содержание заметки: ")
+            notes_manager.add_note(title, body)
+        elif choice == "3":
+            note_id = int(input("Введите ID заметки для редактирования: "))
+            new_title = input("Введите новый заголовок заметки: ")
+            new_body = input("Введите новое содержание заметки: ")
+            notes_manager.edit_note(note_id, new_title, new_body)
+        elif choice == "4":
+            note_id = int(input("Введите ID заметки для удаления: "))
+            notes_manager.delete_note(note_id)
+        elif choice == "5":
+            break
+        else:
+            print("Некорректный выбор")
+
+if __name__ == "__main__":
+    main()
 
